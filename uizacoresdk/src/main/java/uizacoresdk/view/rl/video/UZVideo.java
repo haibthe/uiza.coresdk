@@ -22,22 +22,11 @@ import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-
+import android.widget.*;
 import com.daimajia.androidanimations.library.Techniques;
 import com.github.rubensousa.previewseekbar.PreviewView;
 import com.google.ads.interactivemedia.v3.api.player.VideoAdPlayer;
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.*;
 import com.google.android.exoplayer2.audio.AudioListener;
 import com.google.android.exoplayer2.metadata.MetadataOutput;
 import com.google.android.exoplayer2.source.TrackGroupArray;
@@ -55,30 +44,14 @@ import com.google.android.gms.cast.framework.CastStateListener;
 import com.google.android.gms.cast.framework.media.RemoteMediaClient;
 import com.google.android.gms.common.images.WebImage;
 import com.google.gson.Gson;
-
+import com.uizacoresdk.R;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import com.uizacoresdk.R;
 import uizacoresdk.chromecast.Casty;
-import uizacoresdk.interfaces.CallbackUZTimebar;
-import uizacoresdk.interfaces.UZCallback;
-import uizacoresdk.interfaces.UZItemClick;
-import uizacoresdk.interfaces.UZLiveContentCallback;
-import uizacoresdk.interfaces.UZTVCallback;
+import uizacoresdk.interfaces.*;
 import uizacoresdk.listerner.ProgressCallback;
-import uizacoresdk.util.SensorOrientationChangeNotifier;
-import uizacoresdk.util.TmpParamData;
-import uizacoresdk.util.UZData;
-import uizacoresdk.util.UZInput;
-import uizacoresdk.util.UZOsUtil;
-import uizacoresdk.util.UZTrackingUtil;
-import uizacoresdk.util.UZUtil;
+import uizacoresdk.util.*;
 import uizacoresdk.view.ComunicateMng;
 import uizacoresdk.view.UZPlayerView;
 import uizacoresdk.view.dlg.hq.UZItem;
@@ -92,17 +65,7 @@ import uizacoresdk.view.rl.timebar.UZTimebar;
 import vn.uiza.core.common.Constants;
 import vn.uiza.core.exception.UZException;
 import vn.uiza.core.exception.UZExceptionUtil;
-import vn.uiza.core.utilities.LActivityUtil;
-import vn.uiza.core.utilities.LAnimationUtil;
-import vn.uiza.core.utilities.LConnectivityUtil;
-import vn.uiza.core.utilities.LDateUtils;
-import vn.uiza.core.utilities.LDeviceUtil;
-import vn.uiza.core.utilities.LDialogUtil;
-import vn.uiza.core.utilities.LImageUtil;
-import vn.uiza.core.utilities.LLog;
-import vn.uiza.core.utilities.LScreenUtil;
-import vn.uiza.core.utilities.LSocialUtil;
-import vn.uiza.core.utilities.LUIUtil;
+import vn.uiza.core.utilities.*;
 import vn.uiza.core.utilities.connection.LConectifyService;
 import vn.uiza.data.EventBusData;
 import vn.uiza.restapi.UZAPIMaster;
@@ -136,16 +99,15 @@ import vn.uiza.views.autosize.UZImageButton;
 import vn.uiza.views.autosize.UZTextView;
 import vn.uiza.views.seekbar.UZVerticalSeekBar;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 /**
  * Created by loitp on 2/27/2019.
  */
 
 public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChangeListener, View.OnClickListener, View.OnFocusChangeListener, UZPlayerView.ControllerStateCallback, SensorOrientationChangeNotifier.Listener {
-    private final String TAG = "TAG" + getClass().getSimpleName();
-    private int DEFAULT_VALUE_BACKWARD_FORWARD = 10000;//10000 mls
-    private int DEFAULT_VALUE_CONTROLLER_TIMEOUT = 8000;//8000 mls
-    private final int DELAY_FIRST_TO_GET_LIVE_INFORMATION = 100;
-    private final int DELAY_TO_GET_LIVE_INFORMATION = 15000;
     private static final String M3U8_EXTENSION = ".m3u8";
     private static final String MPD_EXTENSION = ".mpd";
     private static final String PLAY_THROUGH_100 = "100";
@@ -153,6 +115,24 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
     private static final String PLAY_THROUGH_50 = "50";
     private static final String PLAY_THROUGH_25 = "25";
     private static final String HYPHEN = "-";
+    private final String TAG = "TAG" + getClass().getSimpleName();
+    private final int DELAY_FIRST_TO_GET_LIVE_INFORMATION = 100;
+    private final int DELAY_TO_GET_LIVE_INFORMATION = 15000;
+    //===================================================================START FOR PLAYLIST/FOLDER
+    private final int pfLimit = 100;
+    private final String pfOrderBy = "createdAt";
+    private final String pfOrderType = "DESC";
+    private final String publishToCdn = "success";
+    private final int INTERVAL_HEART_BEAT = 10000;
+    private final int INTERVAL_TRACK_CCU = 3000;
+    protected AudioListener audioListener;
+    protected MetadataOutput metadataOutput;
+    protected Player.EventListener eventListener;
+    protected VideoListener videoListener;
+    protected TextOutput textOutput;
+    protected VideoAdPlayer.VideoAdPlayerCallback videoAdPlayerCallback;
+    private int DEFAULT_VALUE_BACKWARD_FORWARD = 10000;//10000 mls
+    private int DEFAULT_VALUE_CONTROLLER_TIMEOUT = 8000;//8000 mls
     private boolean isLivestream;
     private boolean isTablet;
     private String cdnHost;
@@ -176,13 +156,80 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
     //chromecast https://github.com/DroidsOnRoids/Casty
     private UZMediaRouteButton uzMediaRouteButton;
     private UZPlayerView uzPlayerView;
-
     private ResultGetLinkPlay mResultGetLinkPlay;
     private ResultGetTokenStreaming mResultGetTokenStreaming;
     private String urlIMAAd = null;
     private PlayerInfor playerInfor;
     private long startTime = Constants.UNKNOW;
     private boolean isSetUZTimebarBottom;
+    //========================================================================START CONFIG
+    private boolean isAutoStart = Constants.DF_PLAYER_IS_AUTO_START;
+    private boolean isAutoSwitchItemPlaylistFolder = true;
+    private boolean isAutoShowController;
+    private boolean isFreeSize;
+    private boolean isPlayerControllerAlwayVisible;
+    private boolean isSetFirstRequestFocusDone;
+    private boolean isHasError;
+    private String entityId;
+    private UUID uuid;
+    private long timestampBeforeInitNewSession;
+    private boolean isInitCustomLinkPlay;//user pass any link (not use entityId or metadataId)
+    private int countTryLinkPlayError = 0;
+    private boolean activityIsPausing = false;
+    private long timestampOnStartPreview;
+    private boolean isOnPreview;
+    private long maxSeekLastDuration;
+    private boolean isLandscape;//current screen is landscape or portrait
+    private boolean isInitMiniPlayerSuccess = true;
+    private boolean isHideOnTouch = true;
+    private boolean isDefaultUseController = true;
+    //========================================================================END CONFIG
+    private int pfPage = 0;
+    private int pfTotalPage = Integer.MAX_VALUE;
+    private boolean isOnPlayerEnded;
+    private boolean isClickedSkipNextOrSkipPrevious;
+    private String urlImgThumbnail;
+    /*
+     **Change skin via skin id resources
+     * changeSkin(R.layout.uz_player_skin_1);
+     */
+    //TODO improve this func
+    private boolean isRefreshFromChangeSkin;
+    private long currentPositionBeforeChangeSkin;
+    private boolean isCalledFromChangeSkin;
+    private View firstViewHasFocus;
+    private int progressBarColor = Color.WHITE;
+    //=============================================================================================END UI
+    //=============================================================================================START EVENT
+    private UZLiveContentCallback uzLiveContentCallback;
+    private ProgressCallback progressCallback;
+    private CallbackUZTimebar callbackUZTimebar;
+    private UZItemClick uzItemClick;
+    private UZCallback uzCallback;
+    private UZTVCallback uztvCallback;
+    private UZPlayerView.ControllerStateCallback controllerStateCallback;
+    //=============================================================================================END EVENT
+    //=============================================================================================START CALL API
+    private boolean isCalledApiGetDetailEntity;
+    private boolean isCalledAPIGetUrlIMAAdTag;
+    private boolean isCalledAPIGetTokenStreaming;
+    private Data data;
+    private boolean isGetClickedPip;
+    private long timestampInitDataSource;
+    //=============================================================================================START TRACKING
+    private int oldPercent = Constants.NOT_FOUND;
+    private boolean isTracked25;
+    private boolean isTracked50;
+    private boolean isTracked75;
+    private boolean isTracked100;
+    private boolean isTrackingMuiza;
+    //=============================================================================================START EVENTBUS
+    private boolean isCalledFromConnectionEventBus = false;
+    private long positionMiniPlayer;
+    private boolean isCastingChromecast;
+    //last current position lúc từ exoplayer switch sang cast player
+    private long lastCurrentPosition;
+    private boolean isCastPlayerPlayingFirst;
 
     public UZVideo(Context context) {
         super(context);
@@ -217,7 +264,7 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         isTV = LDeviceUtil.isTV(getContext());
         addPlayerView();
         findViews();
-        UZUtil.resizeLayout(rootView, ivVideoCover, getPixelAdded(), getVideoW(), getVideoH(), isFreeSize);
+//        UZUtil.resizeLayout(rootView, ivVideoCover, getPixelAdded(), getVideoW(), getVideoH(), isFreeSize);
         updateUIEachSkin();
         setMarginPreviewTimeBar();
         setMarginRlLiveInfo();
@@ -234,8 +281,9 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         scheduleJob();//for LConnectifyService
     }
 
-    //========================================================================START CONFIG
-    private boolean isAutoStart = Constants.DF_PLAYER_IS_AUTO_START;
+    public boolean isAutoStart() {
+        return isAutoStart;
+    }
 
     public void setAutoStart(boolean isAutoStart) {
         this.isAutoStart = isAutoStart;
@@ -243,27 +291,12 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         updateUIButtonPlayPauseDependOnIsAutoStart();
     }
 
-    public boolean isAutoStart() {
-        return isAutoStart;
-    }
-
-    private boolean isAutoSwitchItemPlaylistFolder = true;
-
-    public void setAutoSwitchItemPlaylistFolder(boolean isAutoSwitchItemPlaylistFolder) {
-        this.isAutoSwitchItemPlaylistFolder = isAutoSwitchItemPlaylistFolder;
-    }
-
     public boolean isAutoSwitchItemPlaylistFolder() {
         return isAutoSwitchItemPlaylistFolder;
     }
 
-    private boolean isAutoShowController;
-
-    public void setControllerAutoShow(boolean isAutoShowController) {
-        this.isAutoShowController = isAutoShowController;
-        if (uzPlayerView != null) {
-            uzPlayerView.setControllerAutoShow(isAutoShowController);
-        }
+    public void setAutoSwitchItemPlaylistFolder(boolean isAutoSwitchItemPlaylistFolder) {
+        this.isAutoSwitchItemPlaylistFolder = isAutoSwitchItemPlaylistFolder;
     }
 
     public boolean getControllerAutoShow() {
@@ -271,6 +304,13 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             return false;
         }
         return uzPlayerView.getControllerAutoShow();
+    }
+
+    public void setControllerAutoShow(boolean isAutoShowController) {
+        this.isAutoShowController = isAutoShowController;
+        if (uzPlayerView != null) {
+            uzPlayerView.setControllerAutoShow(isAutoShowController);
+        }
     }
 
     public long getDuration() {
@@ -377,14 +417,10 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         UZUtil.resizeLayout(rootView, ivVideoCover, getPixelAdded(), width, height, isFreeSize);
     }
 
-    private boolean isFreeSize;
-
     public void setFreeSize(boolean isFreeSize) {
         this.isFreeSize = isFreeSize;
         UZUtil.resizeLayout(rootView, ivVideoCover, getPixelAdded(), getVideoW(), getVideoH(), isFreeSize);
     }
-
-    private boolean isPlayerControllerAlwayVisible;
 
     public void setPlayerControllerAlwayVisible() {
         setControllerAutoShow(true);
@@ -392,10 +428,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         setControllerShowTimeoutMs(0);
         isPlayerControllerAlwayVisible = true;
     }
-    //========================================================================END CONFIG
-
-    private boolean isSetFirstRequestFocusDone;
-    private boolean isHasError;
 
     protected void handleError(UZException uzException) {
         if (uzException == null) {
@@ -417,10 +449,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             uzCallback.onError(exception);
         }
     }
-
-    private String entityId;
-    private UUID uuid;
-    private long timestampBeforeInitNewSession;
 
     protected void init(@NonNull String entityId, boolean isClearDataPlaylistFolder) {
         LLog.d(TAG, "*****NEW SESSION**********************************************************************************************************************************");
@@ -493,8 +521,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         init(entityId, true);
     }
 
-    private boolean isInitCustomLinkPlay;//user pass any link (not use entityId or metadataId)
-
     public void initCustomLinkPlay(@NonNull String linkPlay, boolean isLivestream) {
         LLog.d(TAG, "*****NEW SESSION**********************************************************************************************************************************");
         LLog.d(TAG, "init linkPlay " + linkPlay);
@@ -549,8 +575,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         isClickedSkipNextOrSkipPrevious = false;
         callAPIGetListAllEntity(metadataId);
     }
-
-    private int countTryLinkPlayError = 0;
 
     protected void tryNextLinkPlay() {
         if (isLivestream) {
@@ -640,14 +664,14 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
+    //===================================================================END FOR PLAYLIST/FOLDER
+
     public boolean isPlaying() {
         if (getPlayer() == null) {
             return false;
         }
         return getPlayer().getPlayWhenReady();
     }
-
-    private boolean activityIsPausing = false;
 
     public void onPause() {
         activityIsPausing = true;
@@ -670,8 +694,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
-    private long timestampOnStartPreview;
-
     @Override
     public void onStartPreview(PreviewView previewView, int progress) {
         timestampOnStartPreview = System.currentTimeMillis();
@@ -680,8 +702,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             callbackUZTimebar.onStartPreview(previewView, progress);
         }
     }
-
-    private boolean isOnPreview;
 
     @Override
     public void onPreview(PreviewView previewView, int progress, boolean fromUser) {
@@ -694,8 +714,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             callbackUZTimebar.onPreview(previewView, progress, fromUser);
         }
     }
-
-    private long maxSeekLastDuration;
 
     @Override
     public void onStopPreview(PreviewView previewView, int progress) {
@@ -734,8 +752,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
-    private boolean isLandscape;//current screen is landscape or portrait
-
     public boolean isLandscape() {
         return isLandscape;
     }
@@ -746,16 +762,18 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         //0 portrait duoi
         //90 land phai
         //180 portrait tren
-        boolean isDeviceAutoRotation = LDeviceUtil.isRotationPossible(getContext());
-        if (orientation == 90 || orientation == 270) {
-            if (isDeviceAutoRotation && !isLandscape) {
-                LActivityUtil.changeScreenLandscape((Activity) getContext(), orientation);
-            }
-        } else {
-            if (isDeviceAutoRotation && isLandscape) {
-                LActivityUtil.changeScreenPortrait((Activity) getContext());
-            }
-        }
+
+        /// khóa xoay màn hình
+//        boolean isDeviceAutoRotation = LDeviceUtil.isRotationPossible(getContext());
+//        if (orientation == 90 || orientation == 270) {
+//            if (isDeviceAutoRotation && !isLandscape) {
+//                LActivityUtil.changeScreenLandscape((Activity) getContext(), orientation);
+//            }
+//        } else {
+//            if (isDeviceAutoRotation && isLandscape) {
+//                LActivityUtil.changeScreenPortrait((Activity) getContext());
+//            }
+//        }
     }
 
     @Override
@@ -892,8 +910,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
-    private boolean isInitMiniPlayerSuccess = true;
-
     public void initializePiP() {
         if (getContext() == null || uzPlayerManager == null || uzPlayerManager.getLinkPlay() == null) {
             notifyError(UZExceptionUtil.getExceptionShowPip());
@@ -904,12 +920,16 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             isInitMiniPlayerSuccess = false;
             uzCallback.onStateMiniPlayer(isInitMiniPlayerSuccess);
         }
+        Context context = getContext();
+        String name = context.getPackageName();
+
+        Log.d("ABC", name);
         UZUtil.setVideoWidth(getContext(), getVideoW());
         UZUtil.setVideoHeight(getContext(), getVideoH());
         Intent intent = new Intent(getContext(), FUZVideoService.class);
         intent.putExtra(Constants.FLOAT_CONTENT_POSITION, getCurrentPosition());
         intent.putExtra(Constants.FLOAT_USER_USE_CUSTOM_LINK_PLAY, isInitCustomLinkPlay);
-        intent.putExtra(Constants.FLOAT_UUID, uuid.toString());
+        intent.putExtra(Constants.FLOAT_UUID, uuid == null ? "" : uuid.toString());
         intent.putExtra(Constants.FLOAT_LINK_PLAY, uzPlayerManager.getLinkPlay());
         intent.putExtra(Constants.FLOAT_IS_LIVESTREAM, isLivestream);
         intent.putExtra(Constants.FLOAT_PROGRESS_BAR_COLOR, progressBarColor);
@@ -929,16 +949,16 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
-    public void setControllerShowTimeoutMs(int controllerShowTimeoutMs) {
-        DEFAULT_VALUE_CONTROLLER_TIMEOUT = controllerShowTimeoutMs;
-        uzPlayerView.setControllerShowTimeoutMs(DEFAULT_VALUE_CONTROLLER_TIMEOUT);
-    }
-
     public int getControllerShowTimeoutMs() {
         if (uzPlayerView != null) {
             return uzPlayerView.getControllerShowTimeoutMs();
         }
         return Constants.NOT_FOUND;
+    }
+
+    public void setControllerShowTimeoutMs(int controllerShowTimeoutMs) {
+        DEFAULT_VALUE_CONTROLLER_TIMEOUT = controllerShowTimeoutMs;
+        uzPlayerView.setControllerShowTimeoutMs(DEFAULT_VALUE_CONTROLLER_TIMEOUT);
     }
 
     public boolean isPlayerControllerShowing() {
@@ -965,8 +985,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
-    private boolean isHideOnTouch = true;
-
     public void setHideControllerOnTouch(boolean isHide) {
         if (uzPlayerView != null) {
             this.isHideOnTouch = isHide;
@@ -980,8 +998,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
         return false;
     }
-
-    private boolean isDefaultUseController = true;
 
     public boolean isDefaultUseController() {
         return isDefaultUseController;
@@ -997,14 +1013,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             uzPlayerView.setUseController(isUseController);
         }
     }
-
-    //===================================================================START FOR PLAYLIST/FOLDER
-    private final int pfLimit = 100;
-    private int pfPage = 0;
-    private int pfTotalPage = Integer.MAX_VALUE;
-    private final String pfOrderBy = "createdAt";
-    private final String pfOrderType = "DESC";
-    private final String publishToCdn = "success";
 
     private void callAPIGetListAllEntity(String metadataId) {
         showProgress();
@@ -1114,8 +1122,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
-    private boolean isOnPlayerEnded;
-
     protected void onPlayerEnded() {
         if (isPlaying()) {
             isOnPlayerEnded = true;
@@ -1156,8 +1162,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         UZUtil.showUizaDialog(getContext(), UZDlgPlaylistFolder);
     }
 
-    private boolean isClickedSkipNextOrSkipPrevious;
-
     private void handleClickSkipNext() {
         isClickedSkipNextOrSkipPrevious = true;
         isOnPlayerEnded = false;
@@ -1195,8 +1199,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
         return result;
     }
-
-    //===================================================================END FOR PLAYLIST/FOLDER
 
     /*Nếu đang casting thì button này sẽ handle volume on/off ở cast player
      * Ngược lại, sẽ handle volume on/off ở exo player*/
@@ -1280,12 +1282,12 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         addTrackingMuiza(Constants.MUIZA_EVENT_PAUSE);
     }
 
-    public void setDefaultValueBackwardForward(int mls) {
-        DEFAULT_VALUE_BACKWARD_FORWARD = mls;
-    }
-
     public int getDefaultValueBackwardForward() {
         return DEFAULT_VALUE_BACKWARD_FORWARD;
+    }
+
+    public void setDefaultValueBackwardForward(int mls) {
+        DEFAULT_VALUE_BACKWARD_FORWARD = mls;
     }
 
     /*
@@ -1574,18 +1576,18 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         return showUZTrackSelectionDialog(view, false);
     }
 
-    public void setVolume(float volume) {
-        if (uzPlayerManager == null) {
-            return;
-        }
-        uzPlayerManager.setVolume(volume);
-    }
-
     public float getVolume() {
         if (uzPlayerManager == null) {
             return Constants.NOT_FOUND;
         }
         return uzPlayerManager.getVolume();
+    }
+
+    public void setVolume(float volume) {
+        if (uzPlayerManager == null) {
+            return;
+        }
+        uzPlayerManager.setVolume(volume);
     }
 
     @Override
@@ -1770,8 +1772,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
-    private String urlImgThumbnail;
-
     public void setUrlImgThumbnail(String urlImgThumbnail) {
         if (urlImgThumbnail == null || urlImgThumbnail.isEmpty()) {
             return;
@@ -1923,7 +1923,7 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         uzPlayerView = null;
         int resLayout = UZData.getInstance().getCurrentPlayerId();
         uzPlayerView = (UZPlayerView) ((Activity) getContext()).getLayoutInflater().inflate(resLayout, null);
-        setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT);
+        setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FILL);
         LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
         lp.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
         uzPlayerView.setLayoutParams(lp);
@@ -1931,15 +1931,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         rootView.addView(uzPlayerView);
         setControllerAutoShow(isAutoShowController);
     }
-
-    /*
-     **Change skin via skin id resources
-     * changeSkin(R.layout.uz_player_skin_1);
-     */
-    //TODO improve this func
-    private boolean isRefreshFromChangeSkin;
-    private long currentPositionBeforeChangeSkin;
-    private boolean isCalledFromChangeSkin;
 
     /*
      ** change skin of player (realtime)
@@ -2083,8 +2074,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             }
         }
     }
-
-    private View firstViewHasFocus;
 
     private void handleFirstViewHasFocus() {
         if (firstViewHasFocus != null && uztvCallback != null) {
@@ -2373,8 +2362,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
-    private int progressBarColor = Color.WHITE;
-
     public void setProgressBarColor(int progressBarColor) {
         if (progressBar != null) {
             this.progressBarColor = progressBarColor;
@@ -2432,21 +2419,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
-    //=============================================================================================END UI
-    //=============================================================================================START EVENT
-    private UZLiveContentCallback uzLiveContentCallback;
-    private ProgressCallback progressCallback;
-    private CallbackUZTimebar callbackUZTimebar;
-    private UZItemClick uzItemClick;
-    private UZCallback uzCallback;
-    private UZTVCallback uztvCallback;
-    private UZPlayerView.ControllerStateCallback controllerStateCallback;
-    protected AudioListener audioListener;
-    protected MetadataOutput metadataOutput;
-    protected Player.EventListener eventListener;
-    protected VideoListener videoListener;
-    protected TextOutput textOutput;
-
     public void addUZLiveContentCallback(UZLiveContentCallback uzLiveContentCallback) {
         this.uzLiveContentCallback = uzLiveContentCallback;
     }
@@ -2475,6 +2447,7 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
     public void addControllerStateCallback(final UZPlayerView.ControllerStateCallback controllerStateCallback) {
         this.controllerStateCallback = controllerStateCallback;
     }
+    //=============================================================================================END CALL API
 
     public void addOnTouchEvent(UZPlayerView.OnTouchEvent onTouchEvent) {
         if (uzPlayerView != null) {
@@ -2502,18 +2475,9 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         this.textOutput = textOutput;
     }
 
-    protected VideoAdPlayer.VideoAdPlayerCallback videoAdPlayerCallback;
-
     public void addVideoAdPlayerCallback(VideoAdPlayer.VideoAdPlayerCallback videoAdPlayerCallback) {
         this.videoAdPlayerCallback = videoAdPlayerCallback;
     }
-
-    //=============================================================================================END EVENT
-    //=============================================================================================START CALL API
-    private boolean isCalledApiGetDetailEntity;
-    private boolean isCalledAPIGetUrlIMAAdTag;
-    private boolean isCalledAPIGetTokenStreaming;
-    private Data data;
 
     private void callAPIGetDetailEntity() {
         //Neu da ton tai Data roi thi no duoc goi tu pip, minh ko can phai call api lay detail entity lam gi nua
@@ -2791,7 +2755,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             }
         });
     }
-    //=============================================================================================END CALL API
 
     private void handleDataCallAPI() {
         if (isCalledApiGetDetailEntity && isCalledAPIGetUrlIMAAdTag && isCalledAPIGetTokenStreaming) {
@@ -2807,8 +2770,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             checkData();
         }
     }
-
-    private boolean isGetClickedPip;
 
     private void checkData() {
         UZData.getInstance().setSettingPlayer(true);
@@ -2890,8 +2851,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             handleError(UZExceptionUtil.getExceptionSetup());
         }
     }
-
-    private long timestampInitDataSource;
 
     private void initDataSource(String linkPlay, String urlIMAAd, String urlThumbnailsPreviewSeekbar, List<Subtitle> subtitleList) {
         timestampInitDataSource = System.currentTimeMillis();
@@ -3014,13 +2973,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             }
         }
     }
-
-    //=============================================================================================START TRACKING
-    private int oldPercent = Constants.NOT_FOUND;
-    private boolean isTracked25;
-    private boolean isTracked50;
-    private boolean isTracked75;
-    private boolean isTracked100;
 
     private void setDefaultValueForFlagIsTracked() {
         UZTrackingUtil.clearAllValues(getContext());
@@ -3178,8 +3130,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
-    private final int INTERVAL_HEART_BEAT = 10000;
-
     private void pingHeartBeat() {
         if (getContext() == null || cdnHost == null || cdnHost.isEmpty()) {
             LLog.e(TAG, "Error cannot call API pingHeartBeat() -> cdnHost: " + cdnHost + ", entityName: " + UZData.getInstance().getEntityName() + " -> return");
@@ -3215,8 +3165,7 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             }
         });
     }
-
-    private final int INTERVAL_TRACK_CCU = 3000;
+    //=============================================================================================END TRACKING
 
     private void trackUizaCCUForLivestream() {
         if (getContext() == null || !isLivestream || isInitCustomLinkPlay) {
@@ -3270,8 +3219,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }
     }
 
-    private boolean isTrackingMuiza;
-
     private void callAPITrackMuiza(int s) {
         if (isInitCustomLinkPlay || (s <= 0 || s % 10 != 0) || isTrackingMuiza || UZData.getInstance().isMuizaListEmpty()) {
             return;
@@ -3293,10 +3240,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             }
         });
     }
-    //=============================================================================================END TRACKING
-
-    //=============================================================================================START EVENTBUS
-    private boolean isCalledFromConnectionEventBus = false;
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     public void onMessageEvent(EventBusData.ConnectEvent event) {
@@ -3328,8 +3271,7 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
             }
         }
     }
-
-    private long positionMiniPlayer;
+    //=============================================================================================END EVENTBUS
 
     public boolean isInitNewItem(String urlImgThumbnail) {
         if (positionMiniPlayer != 0) {
@@ -3390,7 +3332,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         msgFromActivityIsInitSuccess.setInitSuccess(true);
         ComunicateMng.postFromActivity(msgFromActivityIsInitSuccess);
     }
-    //=============================================================================================END EVENTBUS
 
     //=============================================================================================START CHROMECAST
     @UiThread
@@ -3428,14 +3369,9 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         updateUIChromecast();
     }
 
-    private boolean isCastingChromecast;
-
     public boolean isCastingChromecast() {
         return isCastingChromecast;
     }
-
-    //last current position lúc từ exoplayer switch sang cast player
-    private long lastCurrentPosition;
 
     private void playChromecast() {
         if (UZData.getInstance().getData() == null || uzPlayerManager == null || uzPlayerManager.getPlayer() == null) {
@@ -3486,8 +3422,6 @@ public class UZVideo extends RelativeLayout implements PreviewView.OnPreviewChan
         }, 1000);
 
     }
-
-    private boolean isCastPlayerPlayingFirst;
 
     /*khi click vào biểu tượng casting
      * thì sẽ pause local player và bắt đầu loading lên cast player

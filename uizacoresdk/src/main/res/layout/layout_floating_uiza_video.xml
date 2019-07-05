@@ -27,13 +27,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/Red" />-->
-
+        <!--android:background="@drawable/background_player_controller"-->
         <RelativeLayout
             android:id="@+id/rl_control"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/background_player_controller"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <ImageButton
                 android:id="@+id/bt_full_screen"
@@ -44,12 +43,14 @@
                 android:background="@color/transparent"
                 android:contentDescription="@string/app_name"
                 android:scaleType="centerInside"
+                android:visibility="gone"
                 android:src="@drawable/baseline_fullscreen_white_48"
                 android:tint="@color/White" />
 
             <ImageButton
                 android:id="@+id/bt_play_pause"
                 android:layout_width="@dimen/w_25"
+                android:visibility="gone"
                 android:layout_height="@dimen/w_25"
                 android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true"
@@ -61,12 +62,13 @@
                 android:tint="@color/White" />
 
             <ImageButton
+                    style="?android:attr/buttonBarButtonStyle"
                 android:id="@+id/bt_exit"
                 android:layout_width="@dimen/w_25"
                 android:layout_height="@dimen/w_25"
                 android:layout_alignParentRight="true"
-                android:layout_alignParentBottom="true"
-                android:layout_marginBottom="@dimen/margin_5"
+                android:layout_alignParentTop="true"
+                android:layout_margin="@dimen/margin_5"
                 android:background="@color/transparent"
                 android:contentDescription="@string/app_name"
                 android:scaleType="centerInside"
@@ -75,14 +77,14 @@
         </RelativeLayout>
 
         <TextView
-            android:id="@+id/tv_msg"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/background_err"
-            android:gravity="center"
-            android:text="@string/err_no_internet_tap_to_retry"
-            android:textSize="@dimen/txt_12"
-            android:textStyle="bold"
-            android:visibility="gone" />
+                android:id="@+id/tv_msg"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/background_err"
+                android:gravity="center"
+                android:text="@string/err_no_internet_tap_to_retry"
+                android:textSize="@dimen/txt_12"
+                android:textStyle="bold"
+                android:visibility="gone" android:layout_marginBottom="0dp" android:layout_alignBottom="@+id/bt_exit"/>
     </RelativeLayout>
 </FrameLayout>

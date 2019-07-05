@@ -9,36 +9,25 @@ import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.view.GestureDetector;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.WindowManager;
+import android.util.Log;
+import android.view.*;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.daimajia.androidanimations.library.Techniques;
 import com.google.android.exoplayer2.Player;
-
+import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
+import com.uizacoresdk.R;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-
-import com.uizacoresdk.R;
 import uizacoresdk.util.TmpParamData;
 import uizacoresdk.util.UZData;
 import uizacoresdk.util.UZUtil;
 import uizacoresdk.view.ComunicateMng;
 import vn.uiza.core.common.Constants;
 import vn.uiza.core.exception.UZException;
-import vn.uiza.core.utilities.LAnimationUtil;
-import vn.uiza.core.utilities.LConnectivityUtil;
-import vn.uiza.core.utilities.LDeviceUtil;
-import vn.uiza.core.utilities.LLog;
-import vn.uiza.core.utilities.LScreenUtil;
-import vn.uiza.core.utilities.LUIUtil;
+import vn.uiza.core.utilities.*;
 import vn.uiza.restapi.uiza.model.v3.linkplay.getlinkplay.ResultGetLinkPlay;
 import vn.uiza.utils.util.SentryUtils;
 
@@ -177,7 +166,7 @@ public class FUZVideoService extends Service implements FUZVideo.Callback {
         EventBus.getDefault().register(this);
         mResultGetLinkPlay = UZData.getInstance().getResultGetLinkPlay();
         if (mResultGetLinkPlay == null) {
-            stopSelf();
+//            stopSelf();
         }
         videoW = UZUtil.getVideoWidth(getBaseContext());
         videoH = UZUtil.getVideoHeight(getBaseContext());
@@ -189,6 +178,9 @@ public class FUZVideoService extends Service implements FUZVideo.Callback {
         marginR = UZUtil.getMiniPlayerMarginR(getBaseContext());
         marginB = UZUtil.getMiniPlayerMarginB(getBaseContext());
         mFloatingView = LayoutInflater.from(this).inflate(R.layout.layout_floating_uiza_video, null);
+
+        Log.d(TAG, "Video size: " + videoW + "x" + videoH);
+
         findViews();
         //Add the view to the window.
         int LAYOUT_FLAG;
@@ -239,6 +231,7 @@ public class FUZVideoService extends Service implements FUZVideo.Callback {
         params.y = screenHeight - 1;
 
         fuzVideo = mFloatingView.findViewById(R.id.uiza_video);
+        fuzVideo.getPlayerView().setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FILL);
         //Add the view to the window
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         mWindowManager.addView(mFloatingView, params);
@@ -313,6 +306,7 @@ public class FUZVideoService extends Service implements FUZVideo.Callback {
     }
 
     private void openApp() {
+
         if (fuzVideo == null || fuzVideo.getPlayer() == null) {
             return;
         }
@@ -324,13 +318,29 @@ public class FUZVideoService extends Service implements FUZVideo.Callback {
         }
         //moveView.setOnTouchListener(null);//disabled move view
         UZUtil.setClickedPip(getApplicationContext(), true);
-        if (UZData.getInstance().getData() == null) {
-            return;
-        }
+//        if (UZData.getInstance().getData() == null) {
+//            return;
+//        }
         LLog.d(TAG, "miniplayer STEP 5 START OPEN APP, miniplayer content position " + fuzVideo.getCurrentPosition());
-        ComunicateMng.MsgFromServiceOpenApp msgFromServiceOpenApp = new ComunicateMng.MsgFromServiceOpenApp(null);
-        msgFromServiceOpenApp.setPositionMiniPlayer(fuzVideo.getCurrentPosition());
-        ComunicateMng.postFromService(msgFromServiceOpenApp);
+
+        String activityToStart = "com.sendo.livestreambuyer.ui.viewstream.ViewStreamActivity";
+        try {
+            Class<?> c = Class.forName(activityToStart);
+            Intent intent = new Intent(this, c);
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } catch (ClassNotFoundException ignored) {
+
+        }
+
+
+
+
+
+//        ComunicateMng.MsgFromServiceOpenApp msgFromServiceOpenApp = new ComunicateMng.MsgFromServiceOpenApp(null);
+//        msgFromServiceOpenApp.setPositionMiniPlayer(fuzVideo.getCurrentPosition());
+//        ComunicateMng.postFromService(msgFromServiceOpenApp);
     }
 
     private boolean isControllerShowing() {
